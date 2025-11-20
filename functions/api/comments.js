@@ -49,12 +49,10 @@ export async function onRequest(context) {
       );
     }
 
-    // 从 URL 获取 post id
     const post = (url.searchParams.get("post") || "").trim();
     const nickname = (data.nickname || "").trim();
     const content = (data.content || "").trim();
 
-    // 基础验证
     if (!post || !nickname || !content) {
       return Response.json(
         { ok: false, msg: "缺少必要字段" },
@@ -78,7 +76,6 @@ export async function onRequest(context) {
 
     const createdAt = new Date().toISOString();
 
-    // 写入 D1（post, nickname, content, created_at）
     try {
       await env.blog_comments
         .prepare(
@@ -98,7 +95,7 @@ export async function onRequest(context) {
   }
 
   /* ============================================================
-     非允许方法
+     其他方法拒绝
   ============================================================ */
   return Response.json(
     { ok: false, msg: "方法不允许" },
