@@ -231,6 +231,137 @@
       box-shadow: 0 6px 16px rgba(10,20,40,0.6);
     }
 
+    /* ===== 评论区容器 ===== */
+    .comment-container {
+      margin: 40px auto;
+      max-width: 900px;
+      padding: 20px;
+    }
+
+    /* ===== 玻璃拟态基础 ===== */
+    .glass-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 20px;
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.12);
+      margin-bottom: 25px;
+    }
+
+    /* 🔆 亮色模式：深色文本 */
+    body.light .comment-nick,
+    body.light .comment-content,
+    body.light .comment-time,
+    body.light .glass-input,
+    body.light .glass-textarea {
+      color: #1b1b1b !important;
+    }
+
+    /* 🔆 亮色模式：深色边线 */
+    body.light .comment-item {
+      border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+    }
+
+    /* 🌙 夜间模式：浅蓝/青色文字（与你全站一致） */
+    body.night .comment-nick {
+      color: #8ffcff !important;
+    }
+    body.night .comment-content {
+      color: #e4ffff !important;
+    }
+    body.night .comment-time {
+      color: rgba(200, 255, 255, 0.7) !important;
+    }
+
+    /* 🌙 夜间模式：浅青色边线（修复你文件中的唯一冲突点） */
+    body.night .comment-item {
+      border-bottom: 1px solid rgba(200, 255, 255, 0.12);
+    }
+
+    /* 🌙 夜间模式：输入框文字浅色 */
+    body.night .glass-input,
+    body.night .glass-textarea {
+      color: #e0faff !important;
+    }
+
+    /* ===== 输入框玻璃风 ===== */
+    .glass-input,
+    .glass-textarea {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: none;
+      outline: none;
+
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+
+      color: #e0faff;
+      font-size: 15px;
+    }
+
+    .glass-textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    /* ===== 提交按钮 ===== */
+    .glass-button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+
+      font-weight: bold;
+      color: #fff;
+
+      background: linear-gradient(135deg, #15c9ff, #21ffb3);
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+      transition: 0.25s;
+    }
+
+    .glass-button:hover {
+      box-shadow: 0 0 25px rgba(0, 255, 255, 0.8);
+      transform: scale(1.03);
+    }
+
+    /* ===== 评论列表 ===== */
+    .comment-item {
+      padding: 12px 8px;
+      /* 默认是亮色模式的边框，但会被 body.light/body.night 覆盖 */
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+
+    .comment-nick {
+      font-weight: bold;
+    }
+
+    .comment-content {
+      margin-top: 4px;
+      white-space: pre-wrap;
+    }
+
+    .comment-time {
+      font-size: 13px;
+      margin-top: 4px;
+      opacity: 0.6;
+    }
+
+    /* ===== 渐入动画 ===== */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
   </style>
 </head>
 
@@ -267,6 +398,22 @@
     </div>
   </div>
 
+  <!-- ===== 评论区（玻璃拟态风） ===== -->
+  <div class="comment-container">
+    <h2 class="comment-title">💬 评论区</h2>
+
+    <!-- 输入框 -->
+    <div class="comment-input-card glass-box">
+      <input id="nickname" class="glass-input" placeholder="昵称（必填）">
+      <textarea id="comment" class="glass-textarea" placeholder="写下你的评论..."></textarea>
+      <button id="sendComment" class="glass-button">提交评论</button>
+    </div>
+
+    <!-- 评论列表 -->
+    <div id="commentList" class="comment-list glass-box">
+      正在加载评论...
+    </div>
+  </div>
   
   <div id="backToTop">↑</div>
 
@@ -437,6 +584,98 @@
         behavior: "smooth"
       });
     };
+
+
+
+    // 获取当前文章 ID：例如 /posts/post0.html → post0
+    const postId = location.pathname.split("/").pop().replace(".html", "");
+
+    // 最小提交间隔（毫秒）
+    const MIN_INTERVAL = 3000;
+    let lastSubmitTime = 0;
+
+    function loadComments() {
+      fetch(`/api/comments?post=${postId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (!data.length) {
+            document.getElementById("commentList").innerHTML = "暂无评论";
+            return;
+          }
+
+          document.getElementById("commentList").innerHTML = data.map(c => `
+            <div class="comment-item">
+              <div class="comment-nick">${c.nickname}</div>
+              <div class="comment-content">${c.content}</div>
+              <div class="comment-time">${c.created_at.replace('T',' ').slice(0,16)}</div>
+            </div>
+          `).join("");
+        });
+    }
+
+    document.getElementById("sendComment").onclick = () => {
+      const now = Date.now();
+
+      // ① 防止快速连点（客户端）
+      if (now - lastSubmitTime < MIN_INTERVAL) {
+        alert("提交太快，请稍后再试！");
+        return;
+      }
+
+      const nickname = document.getElementById("nickname").value.trim();
+      const content = document.getElementById("comment").value.trim();
+
+      // ② 空值校验
+      if (!nickname || !content) {
+        alert("昵称和内容不能为空！");
+        return;
+      }
+
+      // ③ 长度校验（前端）
+      if (nickname.length > 20) {
+        alert("昵称长度不能超过 20 字！");
+        return;
+      }
+      if (content.length > 500) {
+        alert("评论内容不能超过 500 字！");
+        return;
+      }
+
+      // ④ 禁用按钮防止连点
+      const btn = document.getElementById("sendComment");
+      btn.disabled = true;
+      btn.innerText = "提交中…";
+
+      fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          post_id: postId,
+          nickname,
+          content
+        })
+      })
+      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          alert(res.msg || "提交失败，请稍后再试");
+          return;
+        }
+
+        // 重置输入框
+        document.getElementById("comment").value = "";
+        lastSubmitTime = Date.now();
+        loadComments();
+      })
+      .finally(() => {
+        btn.disabled = false;
+        btn.innerText = "提交评论";
+      });
+    };
+
+    // 初次加载评论
+    loadComments();
+
 
     initStars();
     draw();

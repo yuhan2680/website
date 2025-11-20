@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>{{title}} - 小涵Naiwenel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* 亮色模式 */
+      --bg-top: #dffaff;
+      --bg-bottom: #e8f2ff;
+      --nav-bg: linear-gradient(90deg, #2ec7c9, #2970ea);
+      --text-color: #444;
+      --banner-bg: rgba(255,255,255,0.55);
+      --card-bg: rgba(255,255,255,0.88);
+      --title-color: #2970ea;
+
+      /* 夜间模式 */
+      --night-bg-top: #0a0f19;
+      --night-bg-bottom: #0f1a2d;
+      --night-text: #cfd8ff;
+      --night-banner-bg: rgba(40,50,70,0.55);
+      --night-card-bg: rgba(30,40,60,0.75);
+      --night-nav-bg: linear-gradient(90deg, #1c8ca3, #2352a5);
+      --night-title: #7aa8ff;
+    }
+
+    body.light {
+      background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
+      background-attachment: fixed;
+      color: var(--text-color);
+      overflow-x: hidden;
+      overflow-y: scroll;
+    }
+    body.night {
+      background: linear-gradient(180deg, var(--night-bg-top), var(--night-bg-bottom));
+      background-attachment: fixed;
+      color: var(--night-text);
+      overflow-x: hidden;
+      overflow-y: scroll;
+    }
+
+    #star-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .night-toggle {
+      position: fixed;
+      top: 14px;
+      right: 18px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.35);
+      backdrop-filter: blur(6px);
+      border-radius: 18px;
+      cursor: pointer;
+      font-size: 1.2em;
+      z-index: 1000;
+    }
+    body.night .night-toggle {
+      background: rgba(40,40,60,0.45);
+      color: #fff;
+    }
+
+    .menu-nav {
+      width: 100%;
+      background: var(--nav-bg);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      padding: 12px 0;
+      box-shadow: 0 4px 12px rgba(41,112,234,0.22);
+      border-bottom: 4px solid rgba(255,255,255,0.35);
+    }
+    body.night .menu-nav {
+      background: var(--night-nav-bg);
+      border-bottom: rgba(255,255,255,0.15);
+    }
+
+    .menu-container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .menu-logo a {
+      text-decoration: none;
+      color: white;
+      font-size: 1.4em;
+      font-weight: bold;
+    }
+    .menu-list {
+      list-style: none;
+      display: flex;
+      gap: 28px;
+    }
+    .menu-item {
+      color: #fff;
+      text-decoration: none;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    .menu-item:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .article-container {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 28px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 18px rgba(41,112,234,0.17);
+      position: relative;
+      z-index: 1;
+    }
+    body.night .article-container {
+      background: var(--night-card-bg);
+      box-shadow: 0 4px 18px rgba(5,8,18,0.7);
+    }
+
+    .article-title {
+      margin-top: 0;
+      font-size: 2em;
+      color: var(--title-color);
+    }
+    body.night .article-title {
+      color: var(--night-title);
+    }
+
+    .article-date {
+      color: #666;
+      margin-bottom: 20px;
+    }
+    body.night .article-date {
+      color: #9bb0d8;
+    }
+
+    .article-content {
+      font-size: 1.1em;
+      line-height: 1.8em;
+      color: var(--text-color);
+    }
+    body.night .article-content {
+      color: var(--night-text);
+    }
+
+    /* 使 markdown 图片适配 */
+    .article-content img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+
+    .return-btn {
+      margin-top: 30px;
+      display: inline-block;
+      padding: 10px 18px;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      font-size: 1.05em;
+      cursor: pointer;
+      color: #2970ea;
+      border: 1px solid rgba(255,255,255,0.5);
+      transition: 0.25s;
+    }
+    body.night .return-btn {
+      background: rgba(40,40,60,0.55);
+      color: #7aa8ff;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #backToTop { 
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.7);
+      color: #2970ea;
+      font-size: 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.3s;
+      z-index: 999;
+    }
+
+    /* 显示时的状态 */
+    #backToTop.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* ===== 评论区样式（你的版本原封保留） ===== */
+    .comment-container {
+      margin: 40px auto;
+      max-width: 900px;
+      padding: 20px;
+    }
+
+    .glass-box {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      border-radius: 18px;
+      backdrop-filter: blur(14px);
+      padding: 20px;
+      margin-bottom: 25px;
+    }
+
+    /* 亮色 */
+    body.light .comment-nick,
+    body.light .comment-content,
+    body.light .comment-time,
+    body.light .glass-input,
+    body.light .glass-textarea {
+      color: #1b1b1b !important;
+    }
+    body.light .comment-item {
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+    }
+
+    /* 夜色 */
+    body.night .comment-nick { color: #8ffcff !important; }
+    body.night .comment-content { color: #e4ffff !important; }
+    body.night .comment-time { color: rgba(200,255,255,0.7) !important; }
+    body.night .comment-item { border-bottom: 1px solid rgba(200,255,255,0.12); }
+    body.night .glass-input,
+    body.night .glass-textarea { color: #e0faff !important; }
+
+    .glass-input,
+    .glass-textarea {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 12px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      font-size: 15px;
+    }
+    .glass-textarea { min-height: 80px; resize: vertical; }
+
+    .glass-button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      color: #fff;
+      background: linear-gradient(135deg, #15c9ff, #21ffb3);
+      box-shadow: 0 0 15px rgba(0,255,255,0.4);
+    }
+
+    .comment-item {
+      padding: 12px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.12);
+      animation: fadeIn .25s ease;
+    }
+  </style>
+</head>
+
+<body class="light">
+
+  <div class="night-toggle" id="nightToggle">🌙</div>
+  <canvas id="star-canvas"></canvas>
+
+  <nav class="menu-nav">
+    <div class="menu-container">
+      <div class="menu-logo"><a href="../index.html">小涵Naiwenel</a></div>
+      <ul class="menu-list">
+        <li><a href="../index.html" class="menu-item">首页</a></li>
+        <li><a href="../blog.html" class="menu-item">博客列表</a></li>
+        <li><a href="../about.html" class="menu-item">关于我</a></li>
+        <li><a href="../friendlinks.html" class="menu-item">友情链接</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="return-btn" onclick="location.href='../blog.html'">← 返回博客列表</div>
+
+  <!-- 文章区域：模板替换 -->
+  <div class="article-container">
+    <h1 class="article-title">{{title}}</h1>
+    <div class="article-date">发表于：{{date}}</div>
+    <div class="article-content">
+      {{content}}
+    </div>
+  </div>
+
+  <!-- 评论系统 -->
+  <div class="comment-container">
+    <h2 class="comment-title">💬 评论区</h2>
+
+    <div class="comment-input-card glass-box">
+      <input id="nickname" class="glass-input" placeholder="昵称（必填）">
+      <textarea id="comment" class="glass-textarea" placeholder="写下你的评论..."></textarea>
+      <button id="sendComment" class="glass-button">提交评论</button>
+    </div>
+
+    <div id="commentList" class="comment-list glass-box">
+      正在加载评论...
+    </div>
+  </div>
+
+  <div id="backToTop">↑</div>
+
+<script>
+/* ===== 夜间模式切换 ===== */
+const toggleBtn = document.getElementById("nightToggle");
+toggleBtn.onclick = () => {
+  if (document.body.classList.contains("light")) {
+    document.body.classList.replace("light", "night");
+    toggleBtn.textContent = "☀️";
+  } else {
+    document.body.classList.replace("night", "light");
+    toggleBtn.textContent = "🌙";
+  }
+};
+
+/* ===== 星空粒子、爆炸特效（完整保留） ===== */
+const canvas = document.getElementById("star-canvas");
+const ctx = canvas.getContext("2d");
+let stars=[], bursts=[], rings=[];
+let w,h;
+let mouse={x:null, y:null};
+
+function resize(){
+  w=canvas.width=window.innerWidth;
+  h=canvas.height=window.innerHeight;
+}
+window.onresize=resize;
+resize();
+
+function initStars(){
+  stars=[];
+  for(let i=0;i<130;i++){
+    stars.push({
+      x:Math.random()*w,
+      y:Math.random()*h,
+      r:Math.random()*1.3+0.4,
+      dx:(Math.random()-0.5)*0.15,
+      dy:(Math.random()-0.5)*0.15,
+      color:Math.random()>0.5 ? "#2ec7c9" : "#2970ea"
+    });
+  }
+}
+window.addEventListener("mousemove", e=>{ mouse.x=e.clientX; mouse.y=e.clientY; });
+window.addEventListener("mouseleave", ()=> mouse.x=null);
+window.addEventListener("mousedown", createBurst);
+window.addEventListener("touchstart", e=>{
+  const t=e.touches[0];
+  createBurst({clientX:t.clientX, clientY:t.clientY});
+});
+
+function createBurst(e){
+  const x=e.clientX, y=e.clientY;
+  for(let i=0;i<14;i++){
+    bursts.push({
+      x,y,
+      r:Math.random()*3+2,
+      dx:(Math.random()-0.5)*4,
+      dy:(Math.random()-0.5)*4,
+      life:1,
+      color:Math.random()>0.5 ? "#2ec7c9" : "#2970ea",
+      trail:[]
+    });
+  }
+  rings.push({x,y,r:0,alpha:0.85});
+}
+
+function drawBursts(){
+  for(let i=bursts.length-1;i>=0;i--){
+    let b=bursts[i];
+    b.trail.push({x:b.x,y:b.y,alpha:b.life});
+    if(b.trail.length>10) b.trail.shift();
+
+    for(let t of b.trail){
+      ctx.beginPath();
+      ctx.arc(t.x,t.y,1.2,0,Math.PI*2);
+      ctx.fillStyle=b.color;
+      ctx.fill();
+    }
+
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+    ctx.fillStyle=b.color;
+    ctx.fill();
+
+    b.x+=b.dx;
+    b.y+=b.dy;
+    b.dy+=0.03;
+    b.life-=0.02;
+    b.r*=0.97;
+
+    if(b.life<=0 || b.r<0.3) bursts.splice(i,1);
+  }
+}
+
+function drawRings(){
+  for(let i=rings.length-1;i>=0;i--){
+    let r=rings[i];
+    ctx.beginPath();
+    ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(0,200,255,${r.alpha})`;
+    ctx.lineWidth=3;
+    ctx.stroke();
+
+    r.r+=2.3;
+    r.alpha-=0.02;
+    if(r.alpha<=0) rings.splice(i,1);
+  }
+}
+
+function draw(){
+  ctx.clearRect(0,0,w,h);
+
+  for(let s of stars){
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+    ctx.fillStyle=s.color+"AA";
+    ctx.fill();
+
+    s.x+=s.dx;
+    s.y+=s.dy;
+
+    if(mouse.x!==null){
+      const dx=mouse.x-s.x;
+      const dy=mouse.y-s.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<150){
+        s.x+=dx*0.015;
+        s.y+=dy*0.015;
+      }
+    }
+
+    if(s.x<0||s.x>w||s.y<0||s.y>h){
+      s.x=Math.random()*w;
+      s.y=Math.random()*h;
+    }
+  }
+
+  drawBursts();
+  drawRings();
+  requestAnimationFrame(draw);
+}
+
+initStars();
+draw();
+
+/* ===== 返回顶部按钮 ===== */
+const backToTop = document.getElementById("backToTop");
+window.addEventListener("scroll", () => {
+  if (window.scrollY > 200) {
+    backToTop.classList.add("show");
+  } else {
+    backToTop.classList.remove("show");
+  }
+});
+backToTop.onclick = () => {
+  window.scrollTo({top:0, behavior:"smooth"});
+};
+
+/* ===== 评论系统（含防刷） ===== */
+const postId = location.pathname.split("/").pop().replace(".html","");
+let lastSubmitTime = 0;
+
+function loadComments() {
+  fetch(`/api/comments?post=${postId}`)
+    .then(res => res.json())
+    .then(data => {
+      if (!data.length) {
+        commentList.innerHTML = "暂无评论";
+        return;
+      }
+      commentList.innerHTML = data.map(c => `
+        <div class="comment-item">
+          <div class="comment-nick">${c.nickname}</div>
+          <div class="comment-content">${c.content}</div>
+          <div class="comment-time">${c.created_at.replace('T',' ').slice(0,16)}</div>
+        </div>
+      `).join("");
+    });
+}
+
+sendComment.onclick = () => {
+  const now = Date.now();
+  if (now - lastSubmitTime < 3000) {
+    alert("提交太快，请稍后再试！");
+    return;
+  }
+
+  const nickname = nickname.value.trim();
+  const content = comment.value.trim();
+  if (!nickname || !content) {
+    alert("昵称和内容不能为空！");
+    return;
+  }
+  if (nickname.length > 20) {
+    alert("昵称长度不能超过 20 字！");
+    return;
+  }
+  if (content.length > 500) {
+    alert("评论内容不能超过 500 字！");
+    return;
+  }
+
+  sendComment.disabled = true;
+  sendComment.textContent = "提交中…";
+
+  fetch("/api/comments", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({post_id:postId, nickname, content})
+  })
+  .then(res=>res.json())
+  .then(r=>{
+    if(!r.ok){
+      alert(r.msg);
+      return;
+    }
+    comment.value="";
+    lastSubmitTime=now;
+    loadComments();
+  })
+  .finally(()=>{
+    sendComment.disabled=false;
+    sendComment.textContent="提交评论";
+  });
+};
+
+loadComments();
+</script>
+
+</body>
+</html>
