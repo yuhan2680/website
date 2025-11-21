@@ -6,9 +6,9 @@ export async function onRequest(context) {
      GET: 获取指定 post 的评论
   ============================================================ */
   if (request.method === "GET") {
-    const post = url.searchParams.get("post");
+    const postId = url.searchParams.get("post");
 
-    if (!post) {
+    if (!postId) {
       return Response.json(
         { ok: false, msg: "缺少 post 参数" },
         { status: 400 }
@@ -18,12 +18,12 @@ export async function onRequest(context) {
     try {
       const { results } = await env.blog_comments
         .prepare(
-          `SELECT id, nickname, content, created_at 
-           FROM comments 
-           WHERE post = ? 
+          `SELECT id, nickname, content, created_at
+           FROM comments
+           WHERE post_id = ?
            ORDER BY created_at DESC`
         )
-        .bind(post)
+        .bind(postId)
         .all();
 
       return Response.json(results);
@@ -49,11 +49,12 @@ export async function onRequest(context) {
       );
     }
 
-    const post = (url.searchParams.get("post") || "").trim();
+    // 从 URL 获取 post id（与 GET 保持一致）
+    const postId = (url.searchParams.get("post") || "").trim();
     const nickname = (data.nickname || "").trim();
     const content = (data.content || "").trim();
 
-    if (!post || !nickname || !content) {
+    if (!postId || !nickname || !content) {
       return Response.json(
         { ok: false, msg: "缺少必要字段" },
         { status: 400 }
@@ -79,10 +80,10 @@ export async function onRequest(context) {
     try {
       await env.blog_comments
         .prepare(
-          `INSERT INTO comments (post, nickname, content, created_at)
+          `INSERT INTO comments (post_id, nickname, content, created_at)
            VALUES (?, ?, ?, ?)`
         )
-        .bind(post, nickname, content, createdAt)
+        .bind(postId, nickname, content, createdAt)
         .run();
 
       return Response.json({ ok: true, msg: "评论提交成功" });
